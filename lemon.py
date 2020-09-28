@@ -146,7 +146,7 @@ class Tradeable:
         Returns the last recorded cost for this `Tradeable`.
         An alias for `Lemon.get_tradeable_cost`.
         """
-        return Lemon.get_tradeable_cost(self.isin)
+        return Lemon.get_tradeable_cost(self)
 
 class Account:
     def __init__(self, uuid, auth_key):
