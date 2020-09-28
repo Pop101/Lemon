@@ -299,3 +299,23 @@ class HeldTradeable(Tradeable):
         
         if len(held_tradeable) <= 0: return -1
         return held_tradeable['average_price']
+
+    def buy(self, tradeable:Tradeable, quantity:int=1, slippage:float=0.01, limits:tuple=(False, False), length=timedelta(hours=16)):
+        """
+        Creates a buy order for this `Tradeable`. Alias for `Account.create_buy_order` \n
+        `quantity`: the quantity to buy or sell. `1` by default. Must be an integer. \n
+        `slippage`: Automatically calculates the limit based on price change. 1% by default. Set to below 0 to disable.
+        `limits`: A tuple representing the (`stop limit`, `limit`) of the order. `(None, None)` by default. Set either to `None` to disable it. Overrides `slippage`. \n
+        `length`: A `timedelta` or `int` representing how long the order should remain valid. `16 hours` by default
+        """
+        return self.account.create_buy_order(self, quantity=quantity, slippage=slippage, limits=limits, length=length)
+    
+    def sell(self, tradeable:Tradeable, quantity:int=1, slippage:float=0.01, limits:tuple=(False, False), length=timedelta(hours=16)):
+        """
+        Creates a sell order for this `Tradeable`. Alias for `Account.create_sell_order` \n
+        `quantity`: the quantity to buy or sell. `1` by default. Must be an integer. \n
+        `slippage`: Automatically calculates the limit based on price change. 1% by default. Set to below 0 to disable.
+        `limits`: A tuple representing the (`stop limit`, `limit`) of the order. `(None, None)` by default. Set either to `None` to disable it. Overrides `slippage`. \n
+        `length`: A `timedelta` or `int` representing how long the order should remain valid. `16 hours` by default
+        """
+        return self.account.create_sell_order(self, quantity=quantity, slippage=slippage, limits=limits, length=length)
