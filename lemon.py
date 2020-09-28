@@ -36,7 +36,7 @@ class Lemon:
         """
         timestamp = timestamp.astimezone(timezone('Europe/Berlin')) # The market is in the MEZ/MESZ timezone. So is Berlin.
 
-        if timestamp.date() in Germany(prov='NW', year=timestamp.year): return False # ignore holidays
+        if timestamp.date() in Germany(prov='NW', years=timestamp.year): return False # ignore holidays
 
         time_calc = lambda h, m: time(hour=h,minute=m,tzinfo=timezone('Europe/Berlin'))
         
