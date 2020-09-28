@@ -7,5 +7,12 @@ if __name__ == "__main__":
     print('Available funds: {0}'.format(account.get_funds()))
     print('Next market availability: {0}'.format(Lemon.next_market_availability().strftime('%I:%M %p')))
     
-    stock = Lemon.search_for_tradeable('Tesla')
-    print(stock.isin)
+    tesla = Lemon.search_for_tradeable('Tesla')
+    print(tesla.isin)
+
+    # buy a tesla stock
+    account.create_buy_order(tesla)
+
+    # sell all our stocks
+    for held_stock in account:
+        held_stock.sell(quantity=held_stock.get_amount())

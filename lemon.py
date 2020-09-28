@@ -126,6 +126,7 @@ class Lemon:
             req.raise_for_status(); req = req.json()
             return 'results' in str(req)
         except (TimeoutError, ValueError): return False
+
 class Tradeable:
     def __init__(self, isin):
         self.isin = isin
@@ -136,7 +137,6 @@ class Tradeable:
         An alias for `Lemon.get_tradeable_cost`.
         """
         return Lemon.get_tradeable_cost(self.isin)
-
 
 class Account:
     def __init__(self, uuid, auth_key):
@@ -243,6 +243,9 @@ class Account:
         `length`: A `timedelta` or `int` representing how long the order should remain valid. `16 hours` by default
         """
         return self.create_order(tradeable, quantity=quantity, buy=False, slippage=slippage, limits=limits, length=length)
+    
+    def __iter__(self):
+        return iter(self.get_held_tradeables())
 
 
 class Order:
