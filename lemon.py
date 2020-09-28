@@ -1,6 +1,7 @@
 import requests
 from Levenshtein import distance
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, time
+from pytz import timezone
 from threading import Timer
 
 
@@ -28,14 +29,62 @@ class Lemon:
         return Account(accounts[0]['uuid'], auth)
     
     @staticmethod
-    def is_market_open(time=datetime.now()):
-        raise NotImplementedError()
+    def is_market_open(timestamp:datetime=datetime.now()): # von https://www.ls-tc.de/de/handelszeiten
+        """
+        Returns if the market is open. Does not take holidays into account.
+        """
+        timestamp = timestamp.astimezone(timezone('Europe/Berlin')) # The market is in the MEZ/MESZ timezone. So is Berlin.
+        time_calc = lambda h, m: time(hour=h,minute=m,tzinfo=timezone('Europe/Berlin'))
+        
+        if timestamp.weekday() == 5:
+            return time_calc(10,00) <= timestamp.time() <= time_calc(13,00)
+        elif timestamp.weekday() == 6:
+            return time_calc(17,00) <= timestamp.time() <= time_calc(19,00)
+        else:
+            return time_calc(7,30) <= timestamp.time() <= time_calc(23,00)
+
+    @staticmethod
+    def next_market_availability(timestamp:datetime=datetime.now()):
+        """
+        Returns the next market availability to the given `datetime` object,\n
+        or the given `datetime` object if it is currently available.
+        """
+        if Lemon.is_market_open(timestamp): return timestamp
+        return Lemon.next_market_opening(timestamp=timestamp)
+
+    @staticmethod
+    def next_market_opening(timestamp:datetime=datetime.now()):
+        """
+        Returns the next market opening time ahead of the given `datetime`, or `datetime.now()` by default.
+        """
+        given_timezone = timestamp.astimezone().tzinfo # save now so we can convert back
+        timestamp = timestamp.astimezone(timezone('Europe/Berlin'))
+
+        time_calc = lambda h, m: time(hour=h,minute=m,tzinfo=timezone('Europe/Berlin'))
+        market_openings = [time_calc(7,30)] * 5 + [time_calc(10,00), time_calc(17,00)]
+
+        if timestamp.time() <= market_openings[timestamp.weekday()]:
+            next_opening = market_openings[timestamp.weekday()]
+        else:
+            next_opening = market_openings[(timestamp.weekday() + 1) % 7]
+        return timestamp.replace(hour=next_opening.hour, minute=next_opening.minute).astimezone(given_timezone)
     
     @staticmethod
-    def next_market_opening(time=datetime.now()):
-        raise NotImplementedError()
-        if Lemon.is_market_open(time): return True
-        # more logic
+    def next_market_closing(timestamp=datetime.now()):
+        """
+        Returns the next market closing time ahead of the given `datetime`, or `datetime.now()` by default.
+        """
+        given_timezone = timestamp.astimezone().tzinfo # save now so we can convert back
+        timestamp = timestamp.astimezone(timezone('Europe/Berlin'))
+
+        time_calc = lambda h, m: time(hour=h,minute=m,tzinfo=timezone('Europe/Berlin'))
+        market_closings = [time_calc(23,00)] * 5 + [time_calc(13,00), time_calc(19,00)]
+
+        if timestamp.time() <= market_closings[timestamp.weekday]:
+            next_closing = market_closings[timestamp.weekday]
+        else:
+            next_closing = market_closings[(timestamp.weekday + 1) % 7]
+        return timestamp.replace(hour=next_closing.hour, minute=next_closing.minute).astimezone(given_timezone)
 
     @staticmethod
     def search_for_tradeable(query):
@@ -47,7 +96,7 @@ class Lemon:
 
         search = requests.get('https://api.lemon.markets/rest/v1/data/instruments/', params={'search': str(query)})
         search.raise_for_status(); search = search.json()
-        if search.json()['count'] >= 1: return Tradeable(search.json()['results'][0]['isin'])
+        if search['count'] >= 1: return Tradeable(search['results'][0]['isin'])
         return None
 
     @staticmethod
@@ -125,7 +174,7 @@ class Account:
         page = 'https://api.lemon.markets/rest/v1/accounts/{0}/orders/'.format(self.uuid)
         while page:
             response = requests.get(page, headers={'Authorization': self.auth})
-            response.raise_for_status(); response = req.json()
+            response.raise_for_status(); response = response.json()
             page = response['next']
             
             filtered_orders = filter(lambda x: 'executed' not in str(x['status']).lower() or not ignore_executed, response['results'])
