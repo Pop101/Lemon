@@ -108,12 +108,12 @@ class Lemon:
         assert isinstance(tradeable, Tradeable), "Tradeable provided is not a Tradeable"
         if timeout_limit > 0: # TODO: add check if market is open 
             try:
-                ticker = requests.get('https://api.lemon.markets/rest/v1/data/instruments/{0}/ticks/latest/'.format(tradeable),timeout=timeout_limit)
+                ticker = requests.get('https://api.lemon.markets/rest/v1/data/instruments/{0}/ticks/latest/'.format(tradeable.isin),timeout=timeout_limit)
                 ticker.raise_for_status(); ticker = ticker.json()
                 return ticker['price']
             except (requests.exceptions.ReadTimeout, TimeoutError):
                 pass
-        ticker = requests.get('https://api.lemon.markets/rest/v1/data/instruments/{0}/candle/m1/'.format(tradeable), params={'ordering': '-date', 'limit': 1})
+        ticker = requests.get('https://api.lemon.markets/rest/v1/data/instruments/{0}/candle/m1/'.format(tradeable.isin), params={'ordering': '-date', 'limit': 1})
         ticker.raise_for_status(); ticker = ticker.json()
         return ticker['results'][0]['close']
     
