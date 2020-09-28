@@ -15,7 +15,7 @@ class Lemon:
     @staticmethod
     def select_account(auth, name=''):
         """
-        Selects an account beloning to the holder of the authentication provided. \n
+        Selects an account beloning to the holder of the authentication provided.
         If no name is provided, it selects the first accound. Otherwise, it searches available accounts for the closest match.
         """
         assert Lemon.validate_key(auth), 'Endpoint not reachable. Check your credentials and connection.'
@@ -46,7 +46,7 @@ class Lemon:
     @staticmethod
     def next_market_availability(timestamp:datetime=datetime.now()):
         """
-        Returns the next market availability to the given `datetime` object,\n
+        Returns the next market availability to the given `datetime` object,
         or the given `datetime` object if it is currently available.
         """
         if Lemon.is_market_open(timestamp): return timestamp
@@ -89,9 +89,9 @@ class Lemon:
     @staticmethod
     def search_for_tradeable(query):
         """
-        Searches for a `Tradeable` by query. \n
-        Only searches by title, wkin, and isin, not symbol. \n
-        Returns `None` if tradeable is not found
+        Searches for a `Tradeable` by query.
+        Only searches by title, wkin, and isin, not symbol.
+        Returns `None` if tradeable is not found.
         """
 
         search = requests.get('https://api.lemon.markets/rest/v1/data/instruments/', params={'search': str(query)})
@@ -132,7 +132,7 @@ class Tradeable:
     
     def get_cost(self):
         """
-        Returns the last recorded cost for this `Tradeable`. \n
+        Returns the last recorded cost for this `Tradeable`.
         An alias for `Lemon.get_tradeable_cost`.
         """
         return Lemon.get_tradeable_cost(self.isin)
@@ -165,7 +165,7 @@ class Account:
     
     def get_orders(self, ignore_executed:bool= True):
         """
-        Returns a list of `Orders`. \n
+        Returns a list of `Orders`.
         If `ignore_executed` is `True`, it returns a list of `Orders` that have not been executed yet
         """
         assert Lemon.validate_key(self.auth), 'Authorization invalid. Check your credentials and connection.'
@@ -262,7 +262,7 @@ class Order:
     
     def get_status(self):
         """
-        Gets a `tuple` representing the status of the order. \n
+        Gets a `tuple` representing the status of the order.
         The first value is the status as a string, the second is the amount it executed with, or `-1` if still pending.
         """
         
