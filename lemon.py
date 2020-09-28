@@ -2,6 +2,7 @@ import requests
 from Levenshtein import distance
 from datetime import timedelta, datetime, time
 from pytz import timezone
+from holidays import Germany
 from threading import Timer
 
 
@@ -34,6 +35,9 @@ class Lemon:
         Returns if the market is open. Does not take holidays into account.
         """
         timestamp = timestamp.astimezone(timezone('Europe/Berlin')) # The market is in the MEZ/MESZ timezone. So is Berlin.
+
+        if timestamp.date() in Germany(prov='NW', year=timestamp.year): return False # ignore holidays
+
         time_calc = lambda h, m: time(hour=h,minute=m,tzinfo=timezone('Europe/Berlin'))
         
         if timestamp.weekday() == 5:
@@ -63,6 +67,9 @@ class Lemon:
         time_calc = lambda h, m: time(hour=h,minute=m,tzinfo=timezone('Europe/Berlin'))
         market_openings = [time_calc(7,30)] * 5 + [time_calc(10,00), time_calc(17,00)]
 
+        while timestamp in Germany(years=timestamp.year, prov='NW'): # ignore all holidays
+            timestamp += timedelta(days=1)
+
         if timestamp.time() <= market_openings[timestamp.weekday()]:
             next_opening = market_openings[timestamp.weekday()]
         else:
@@ -79,6 +86,9 @@ class Lemon:
 
         time_calc = lambda h, m: time(hour=h,minute=m,tzinfo=timezone('Europe/Berlin'))
         market_closings = [time_calc(23,00)] * 5 + [time_calc(13,00), time_calc(19,00)]
+
+        while timestamp in Germany(years=timestamp.year, prov='NW'): # ignore all holidays
+            timestamp += timedelta(days=1)
 
         if timestamp.time() <= market_closings[timestamp.weekday]:
             next_closing = market_closings[timestamp.weekday]
