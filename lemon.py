@@ -116,7 +116,7 @@ class Lemon:
         """
 
         assert isinstance(tradeable, Tradeable), "Tradeable provided is not a Tradeable"
-        if timeout_limit > 0: # TODO: add check if market is open 
+        if timeout_limit > 0 and Lemon.is_market_open():
             try:
                 ticker = requests.get('https://api.lemon.markets/rest/v1/data/instruments/{0}/ticks/latest/'.format(tradeable.isin),timeout=timeout_limit)
                 ticker.raise_for_status(); ticker = ticker.json()
@@ -140,6 +140,14 @@ class Lemon:
 class Tradeable:
     def __init__(self, isin):
         self.isin = isin
+
+        # Grab the name, type, and wkin
+        details = self.get_details()
+        
+        self.wkin = details['wkn']
+        self.name = details['name']
+        self.type = details['type']
+        self.symbol = details['symbol']
     
     def get_cost(self):
         """
@@ -147,6 +155,16 @@ class Tradeable:
         An alias for `Lemon.get_tradeable_cost`.
         """
         return Lemon.get_tradeable_cost(self)
+    
+    def get_details(self):
+        """
+        Returns a dictionary containing this `tradeable`'s `isin`, `wkn`, `name`, `type`, and `symbol` 
+        """
+        req = requests.get('https://api.lemon.markets/rest/v1/data/instruments/{0}/'.format(self.isin))
+        req.raise_for_status(); req = req.json()
+        req['name'] = req['title']; del req['title']
+        return req
+        
 
 class Account:
     def __init__(self, uuid, auth_key):
@@ -285,7 +303,6 @@ class Order:
 
         if 'open' in order['status']: return (order['status'], -1)
         return order['status'], order['average_price']
-
 
 class HeldTradeable(Tradeable):
     def __init__(self, isin, account):
