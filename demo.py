@@ -8,7 +8,10 @@ if __name__ == "__main__":
     print('Next market availability: {0}'.format(Lemon.next_market_availability().strftime('%I:%M %p')))
     
     tesla = Lemon.search_for_tradeable('Tesla')
-    print(tesla.isin)
+    print('Tesla\'s isin: {0}. Tesla\'s symbol: {1}.'.format(tesla.isin, tesla.symbol))
+
+    buy = input('Would you like to proceed into buying stocks?')
+    if not buy.lower().startswith('y'): exit(0)
 
     # buy a tesla stock
     account.create_buy_order(tesla)
