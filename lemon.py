@@ -3,7 +3,6 @@ from Levenshtein import distance
 from datetime import timedelta, datetime, time
 from pytz import timezone
 from holidays import Germany
-from threading import Timer
 
 
 def _get_closest_string(string, iterable, preprocess=lambda s: s):
@@ -223,9 +222,9 @@ class Account:
         request_args = {'instrument': tradeable, 'quantity': quantity}
 
         if isinstance(length, timedelta):
-            request_args['valid_until'] = ((datetime.now() + length) - datetime(1970,1,1)).total_seconds()
+            request_args['valid_until'] = ((datetime.now() + length) - datetime(1970,1,1, tzinfo=timezone('UTC'))).total_seconds()
         else:
-             request_args['valid_until'] = ((datetime.now() + timedelta(seconds=length)) - datetime(1970,1,1)).total_seconds()
+             request_args['valid_until'] = ((datetime.now() + timedelta(seconds=length)) - datetime(1970,1,1, tzinfo=timezone('UTC'))).total_seconds()
         
         # Set side and calculate limit based on slippage
         if buy:
