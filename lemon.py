@@ -7,7 +7,7 @@ from holidays import Germany
 
 def _get_closest_string(string, iterable, preprocess=lambda s: s):
     string = preprocess(string)
-    distances = sorted({s : distance(string, preprocess(s))/max(len(preprocess(s)),0.01) for s in iterable}.items(), key=lambda i: i[1], reverse=True)
+    distances = sorted({s : distance(string, (preprocess(s))/max(len(preprocess(s)),0.01) if length_dependant else preprocess(s)) for s in iterable}.items(), key=lambda i: i[1])
     if len(distances) > 0: return distances[0][0]
     return string
 
@@ -98,14 +98,45 @@ class Lemon:
     @staticmethod
     def search_for_tradeable(query):
         """
-        Searches for a `Tradeable` by query.
-        Only searches by title, wkin, and isin, not symbol.
+        Searches for a `Tradeable` by query.\n
+        `search_type`: What format the query matches. Can be `isin`, `wkn`, `title`/`name`, `type`, and `symbol`. If none is given, symbol will not be searched for.\n
+        `search_for`: `stocks`, `bonds`, `fonds`, or `warrants`. If none is given, all will be returned.
         Returns `None` if tradeable is not found.
         """
+        # normalize sarch_for and search_type
+        if 'stock' in search_for.lower(): search_for = 'stocks'
+        elif 'bond' in search_for.lower(): search_for = 'bonds'
+        elif 'fond' in search_for.lower(): search_for = 'fonds'
+        elif 'warrant' in search_for.lower(): search_for = 'warrants'
+        else: search_for = None
 
-        search = requests.get('https://api.lemon.markets/rest/v1/data/instruments/', params={'search': str(query)})
-        search.raise_for_status(); search = search.json()
-        if search['count'] >= 1: return Tradeable(search['results'][0]['isin'])
+        if 'isin' in search_type.lower(): search_type = 'isin'
+        elif 'wkn' in search_type.lower(): search_type = 'wkn'
+        elif 'title' in search_type.lower(): search_type = 'title'
+        elif 'name' in search_type.lower(): search_type = 'title'
+        elif 'type' in search_type.lower(): search_type = 'type'
+        elif 'symbol' in search_type.lower(): search_type = 'symbol'
+        else: search_type = None
+
+        instruments = list()
+        
+        next_page = 'https://api.lemon.markets/rest/v1/data/instruments/?search={0}'.format(query)
+        while next_page:
+            search = requests.get(next_page)
+            search.raise_for_status(); search = search.json()
+            if search['count'] >= 1: instruments.extend(search['results'])
+            next_page = search['next']
+        
+        if len(instruments) <= 0: return None
+        if not search_type: return Tradeable(instruments[0]['isin'])
+        
+        instr_names = [x[search_type] for x in instruments]
+        try:
+            to_search = _get_closest_string(query, instr_names, length_dependant=False)
+            indx = instr_names.index(to_search)
+            return Tradeable(instruments[indx]['isin'])
+        except IndexError:
+            return None
         return None
 
     @staticmethod
