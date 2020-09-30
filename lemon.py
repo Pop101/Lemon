@@ -96,11 +96,11 @@ class Lemon:
         return timestamp.replace(hour=next_closing.hour, minute=next_closing.minute).astimezone(given_timezone)
 
     @staticmethod
-    def search_for_tradeable(query):
+    def search_for_tradeable(query, search_for:str='all', search_type:str='all'):
         """
         Searches for a `Tradeable` by query.\n
         `search_type`: What format the query matches. Can be `isin`, `wkn`, `title`/`name`, `type`, and `symbol`. If none is given, symbol will not be searched for.\n
-        `search_for`: `stocks`, `bonds`, `fonds`, or `warrants`. If none is given, all will be returned.
+        `search_for`: `stocks`, `bonds`, `fonds`, or `warrants`. Defaults to all will be returned.
         Returns `None` if tradeable is not found.
         """
         # normalize sarch_for and search_type
