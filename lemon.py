@@ -5,7 +5,7 @@ from pytz import timezone
 from holidays import Germany
 
 
-def _get_closest_string(string, iterable, preprocess=lambda s: s):
+def _get_closest_string(string, iterable, length_dependant:bool=True, preprocess=lambda s: s.lower()):
     string = preprocess(string)
     distances = sorted({s : distance(string, (preprocess(s))/max(len(preprocess(s)),0.01) if length_dependant else preprocess(s)) for s in iterable}.items(), key=lambda i: i[1])
     if len(distances) > 0: return distances[0][0]
@@ -128,6 +128,7 @@ class Lemon:
             next_page = search['next']
         
         if len(instruments) <= 0: return None
+        if search_for: instruments = list(filter(lambda x: x['type'].lower() in search_for, instruments))
         if not search_type: return Tradeable(instruments[0]['isin'])
         
         instr_names = [x[search_type] for x in instruments]
@@ -135,7 +136,7 @@ class Lemon:
             to_search = _get_closest_string(query, instr_names, length_dependant=False)
             indx = instr_names.index(to_search)
             return Tradeable(instruments[indx]['isin'])
-        except IndexError:
+        except (IndexError, ValueError):
             return None
         return None
 
