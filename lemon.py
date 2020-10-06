@@ -146,6 +146,22 @@ class Lemon:
         return None
 
     @staticmethod
+    def nyse_symbol_to_name(symbol:str):
+        """
+        Converts a NYSE symbol to a company name. Returns `None` if no company is found.\n
+        Symbol case does not matter, but letters must mach exactly
+        """
+        # Credit to https://stackoverflow.com/questions/38967533/retrieve-company-name-with-ticker-symbol-input-yahoo-or-google-api
+        url = "http://d.yimg.com/autoc.finance.yahoo.com/autoc?query={0}&lang=en".format(symbol)
+
+        results = requests.get(url)
+        results.raise_for_status(); results = results.json()
+
+        for res in results['ResultSet']['Result']:
+            if res['symbol'].lower() == symbol.lower():
+                return res['name']
+
+    @staticmethod
     def get_tradeable_cost(tradeable, timeout_limit=0.25):
         """
         Returns the last recorded price of a `Tradeable`
