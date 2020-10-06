@@ -7,7 +7,8 @@ from holidays import Germany
 
 def _get_closest_string(string, iterable, length_dependant:bool=True, preprocess=lambda s: s.lower()):
     string = preprocess(string)
-    distances = sorted({s : distance(string, (preprocess(s)) if length_dependant else preprocess(s))/max(len(preprocess(s)),0.01) for s in iterable}.items(), key=lambda i: i[1])
+    iterable = list(filter(lambda x: x != None, iterable))
+    distances = sorted({s : distance(string, preprocess(s)) / (max(len(preprocess(s)),0.01) if length_dependant else 1) for s in iterable}.items(), key=lambda i: i[1])
     if len(distances) > 0: return distances[0][0]
     return string
 
@@ -100,9 +101,12 @@ class Lemon:
         """
         Searches for a `Tradeable` by query.\n
         `search_type`: What format the query matches. Can be `isin`, `wkn`, `title`/`name`, `type`, and `symbol`. If none is given, symbol will not be searched for.\n
+        NOTE: searching by `symbol` takes significantly longer, as it is currently unsupported
         `search_for`: `stocks`, `bonds`, `fonds`, or `warrants`. Defaults to all will be returned.
         Returns `None` if tradeable is not found.
         """
+        if len(query) <= 0: return None
+
         # normalize sarch_for and search_type
         if 'stock' in search_for.lower(): search_for = 'stocks'
         elif 'bond' in search_for.lower(): search_for = 'bonds'
@@ -121,6 +125,7 @@ class Lemon:
         instruments = list()
         
         next_page = 'https://api.lemon.markets/rest/v1/data/instruments/?search={0}'.format(query)
+        if search_type != None and 'symbol' in search_type: next_page = 'https://api.lemon.markets/rest/v1/data/instruments/?search={0}'.format(query[0])
         while next_page:
             search = requests.get(next_page)
             search.raise_for_status(); search = search.json()
