@@ -59,7 +59,7 @@ class Lemon:
     @staticmethod
     def next_market_opening(timestamp:datetime=datetime.now()):
         """
-        Returns the next market opening time ahead of the given `datetime`, or `datetime.now()` by default.
+        Returns the next market opening time ahead of the given `datetime`.
         """
         given_timezone = timestamp.astimezone().tzinfo # save now so we can convert back
         timestamp = timestamp.astimezone(timezone('Europe/Berlin'))
@@ -79,7 +79,7 @@ class Lemon:
     @staticmethod
     def next_market_closing(timestamp=datetime.now()):
         """
-        Returns the next market closing time ahead of the given `datetime`, or `datetime.now()` by default.
+        Returns the next market closing time ahead of the given `datetime`
         """
         given_timezone = timestamp.astimezone().tzinfo # save now so we can convert back
         timestamp = timestamp.astimezone(timezone('Europe/Berlin'))
@@ -90,10 +90,10 @@ class Lemon:
         while timestamp in Germany(years=timestamp.year, prov='NW'): # ignore all holidays
             timestamp += timedelta(days=1)
 
-        if timestamp.time() <= market_closings[timestamp.weekday]:
-            next_closing = market_closings[timestamp.weekday]
+        if timestamp.time() <= market_closings[timestamp.weekday()]:
+            next_closing = market_closings[timestamp.weekday()]
         else:
-            next_closing = market_closings[(timestamp.weekday + 1) % 7]
+            next_closing = market_closings[(timestamp.weekday() + 1) % 7]
         return timestamp.replace(hour=next_closing.hour, minute=next_closing.minute).astimezone(given_timezone)
 
     @staticmethod
