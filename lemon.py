@@ -7,7 +7,7 @@ from holidays import Germany
 
 def _get_closest_string(string, iterable, length_dependant:bool=True, preprocess=lambda s: s.lower()):
     string = preprocess(string)
-    distances = sorted({s : distance(string, (preprocess(s))/max(len(preprocess(s)),0.01) if length_dependant else preprocess(s)) for s in iterable}.items(), key=lambda i: i[1])
+    distances = sorted({s : distance(string, (preprocess(s)) if length_dependant else preprocess(s))/max(len(preprocess(s)),0.01) for s in iterable}.items(), key=lambda i: i[1])
     if len(distances) > 0: return distances[0][0]
     return string
 
