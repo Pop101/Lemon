@@ -48,7 +48,7 @@ class Lemon:
             return time_calc(7,30) <= timestamp.time() <= time_calc(23,00)
 
     @staticmethod
-    def next_market_availability(timestamp:datetime=datetime.now()):
+    def next_market_availability(timestamp:datetime=datetime.now().astimezone()):
         """
         Returns the next market availability to the given `datetime` object,
         or the given `datetime` object if it is currently available.
@@ -57,7 +57,7 @@ class Lemon:
         return Lemon.next_market_opening(timestamp=timestamp)
 
     @staticmethod
-    def next_market_opening(timestamp:datetime=datetime.now()):
+    def next_market_opening(timestamp:datetime=datetime.now().astimezone()):
         """
         Returns the next market opening time ahead of the given `datetime`.
         """
@@ -77,7 +77,7 @@ class Lemon:
         return timestamp.replace(hour=next_opening.hour, minute=next_opening.minute).astimezone(given_timezone)
     
     @staticmethod
-    def next_market_closing(timestamp=datetime.now()):
+    def next_market_closing(timestamp=datetime.now().astimezone()):
         """
         Returns the next market closing time ahead of the given `datetime`
         """
@@ -101,8 +101,8 @@ class Lemon:
         """
         Searches for a `Tradeable` by query.\n
         `search_type`: What format the query matches. Can be `isin`, `wkn`, `title`/`name`, `type`, and `symbol`. If none is given, symbol will not be searched for.\n
-        NOTE: searching by `symbol` takes significantly longer, as it is currently unsupported
-        `search_for`: `stocks`, `bonds`, `fonds`, or `warrants`. Defaults to all will be returned.
+        NOTE: searching by `symbol` takes significantly longer, as it is currently unsupported. \n
+        `search_for`: `stocks`, `bonds`, `fonds`, or `warrants`. Defaults to all will be returned. \n
         Returns `None` if tradeable is not found.
         """
         if len(query) <= 0: return None
