@@ -269,15 +269,16 @@ class Account:
         `buy`: If it should create a buy or sell order. `False` by default. \n
         `slippage`: Automatically calculates the limit based on price change. 1% by default. Set to below 0 to disable.
         `limits`: A tuple representing the (`stop limit`, `limit`) of the order. `(None, None)` by default. Set either to `None` to disable it. Overrides `slippage`. \n
-        `length`: A `timedelta` or `int` representing how long the order should remain valid. `16 hours` by default
+        `length`: A `timedelta` or `int` representing how long the order should remain valid. `16 hours` by default. \n
+        Returns an `Order` representing the created order.
         """
         
         request_args = {'instrument': tradeable, 'quantity': quantity}
 
         if isinstance(length, timedelta):
-            request_args['valid_until'] = ((datetime.now() + length) - datetime(1970,1,1, tzinfo=timezone('UTC'))).total_seconds()
+            request_args['valid_until'] = ((datetime.utcnow() + length).astimezone(timezone('UTC')) - datetime(1970,1,1, tzinfo=timezone('UTC'))).total_seconds()
         else:
-             request_args['valid_until'] = ((datetime.now() + timedelta(seconds=length)) - datetime(1970,1,1, tzinfo=timezone('UTC'))).total_seconds()
+             request_args['valid_until'] = ((datetime.utcnow() + timedelta(seconds=length)).astimezone(timezone('UTC')) - datetime(1970,1,1, tzinfo=timezone('UTC'))).total_seconds()
         
         # Set side and calculate limit based on slippage
         if buy:
@@ -309,7 +310,8 @@ class Account:
         `quantity`: the quantity to buy or sell. `1` by default. Must be an integer. \n
         `slippage`: Automatically calculates the limit based on price change. 1% by default. Set to below 0 to disable.
         `limits`: A tuple representing the (`stop limit`, `limit`) of the order. `(None, None)` by default. Set either to `None` to disable it. Overrides `slippage`. \n
-        `length`: A `timedelta` or `int` representing how long the order should remain valid. `16 hours` by default
+        `length`: A `timedelta` or `int` representing how long the order should remain valid. `16 hours` by default. \n
+        Returns an `Order` representing the created order.
         """
         return self.create_order(tradeable, quantity=quantity, buy=True, slippage=slippage, limits=limits, length=length)
     
@@ -320,7 +322,8 @@ class Account:
         `quantity`: the quantity to buy or sell. `1` by default. Must be an integer. \n
         `slippage`: Automatically calculates the limit based on price change. 1% by default. Set to below 0 to disable.
         `limits`: A tuple representing the (`stop limit`, `limit`) of the order. `(None, None)` by default. Set either to `None` to disable it. Overrides `slippage`. \n
-        `length`: A `timedelta` or `int` representing how long the order should remain valid. `16 hours` by default
+        `length`: A `timedelta` or `int` representing how long the order should remain valid. `16 hours` by default. \n
+        Returns an `Order` representing the created order.
         """
         return self.create_order(tradeable, quantity=quantity, buy=False, slippage=slippage, limits=limits, length=length)
     
