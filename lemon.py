@@ -243,6 +243,20 @@ class Account:
         held.raise_for_status(); held = held.json()
         return [HeldTradeable(x['instrument']['isin'], self) for x in held]
     
+    def get_held_tradeable(self, tradeable:str or Tradeable):
+        """
+        Returns a `HeldTradeable` matching the given `isin` or `Tradeable`
+        """
+        if isinstance(tradeable, Tradeable): tradeable = tradeable.isin
+        return HeldTradeable(tradeable, self)
+    
+    def get_held_count(self, tradeable:str or Tradeable):
+        """
+        Returns an integer representing how many of a `Tradeable` or `isin` you hold
+        """
+        if isinstance(tradeable, Tradeable): tradeable = tradeable.isin
+        return HeldTradeable(tradeable, self).get_amount()
+        
     def get_orders(self, ignore_executed:bool= True):
         """
         Returns a list of `Orders`.
@@ -287,7 +301,11 @@ class Account:
         else:
             request_args['side'] = 'sell'
             slippage_price = (1-slippage) * Lemon.get_tradeable_cost(tradeable)
-            
+
+            # double-check quantity
+            quantity = min(quantity, self.get_held_count(tradeable))
+        
+        if quantity <= 0: raise ValueError('Quantity must be greater than 0!')
         if slippage > 0: request_args['limit_price'] = slippage_price
         
         # override for manually-set limits
@@ -298,7 +316,7 @@ class Account:
             if limits[1]:
                 request_args['limit_price'] = limits[1]
         
-        if buy: assert quantity * request_args['limit_price'] <= self.get_funds(), 'Price limit is greater than investable funds!'
+        if buy and quantity * request_args['limit_price'] > self.get_funds(): raise ValueError('Price limit is greater than investable funds!')
         order = requests.post('https://api.lemon.markets/rest/v1/accounts/{0}/orders/'.format(self.uuid), data=request_args, headers={'Authorization': self.auth})
         order.raise_for_status(); order = order.json()
         return Order(order['uuid'], self)
@@ -375,7 +393,7 @@ class HeldTradeable(Tradeable):
         if len(held_tradeable) <= 0: return 0
         return held_tradeable['quantity']
 
-    def get_cost(self):
+    def get_acquired_cost(self):
         """
         Returns the average cost of acquiring this `Tradeable`, or `-1` if you do not hold any.
         """
