@@ -275,7 +275,7 @@ class Account:
             orders.extend(list(map(lambda x: Order(x['uuid'], self), filtered_orders)))
         return orders
     
-    def create_order(self, tradeable:Tradeable, quantity:int=1, buy:bool=False, slippage:float=0.01, limits:tuple=(False, False), length=timedelta(hours=16)):
+    def create_order(self, tradeable:Tradeable, quantity:int=1, buy:bool=False, slippage:float=0.01, limits:tuple=(False, False), length=timedelta(hours=16), handle_errors:bool=False):
         """
         Creates an order on the stock market. \n
         `tradeable`: the Tradeable to order \n
@@ -284,6 +284,7 @@ class Account:
         `slippage`: Automatically calculates the limit based on price change. 1% by default. Set to below 0 to disable.
         `limits`: A tuple representing the (`stop limit`, `limit`) of the order. `(None, None)` by default. Set either to `None` to disable it. Overrides `slippage`. \n
         `length`: A `timedelta` or `int` representing how long the order should remain valid. `16 hours` by default. \n
+        `handle_errors`: A boolean. If true, errors such as quantity too high or too low will be handled, otherwise, they will be raised. \n
         Returns an `Order` representing the created order.
         """
         
@@ -302,8 +303,9 @@ class Account:
             request_args['side'] = 'sell'
             slippage_price = (1-slippage) * Lemon.get_tradeable_cost(tradeable)
 
-            # double-check quantity
-            quantity = min(quantity, self.get_held_count(tradeable))
+            # double-check sell quantity
+            if handle_errors: quantity = min(quantity, self.get_held_count(tradeable))
+            else: raise ValueError('You cannot sell more than you hold')
         
         if quantity <= 0: raise ValueError('Quantity must be greater than 0!')
         if slippage > 0: request_args['limit_price'] = slippage_price
@@ -316,12 +318,16 @@ class Account:
             if limits[1]:
                 request_args['limit_price'] = limits[1]
         
-        if buy and quantity * request_args['limit_price'] > self.get_funds(): raise ValueError('Price limit is greater than investable funds!')
+        # double-check buy quantity
+        if buy and quantity * request_args['limit_price'] > self.get_funds(): 
+            if handle_errors: quantity = int(self.get_funds()/request_args['limit_price'])
+            else: raise ValueError('Price limit is greater than investable funds!')
+        
         order = requests.post('https://api.lemon.markets/rest/v1/accounts/{0}/orders/'.format(self.uuid), data=request_args, headers={'Authorization': self.auth})
         order.raise_for_status(); order = order.json()
         return Order(order['uuid'], self)
     
-    def create_buy_order(self, tradeable:Tradeable, quantity:int=1, slippage:float=0.01, limits:tuple=(False, False), length=timedelta(hours=16)):
+    def create_buy_order(self, tradeable:Tradeable, quantity:int=1, slippage:float=0.01, limits:tuple=(False, False), length=timedelta(hours=16), handle_errors:bool=False):
         """
         Creates a buy order on the stock market. Alias for `Account.create_order` \n
         `tradeable`: the Tradeable to order \n
@@ -329,11 +335,12 @@ class Account:
         `slippage`: Automatically calculates the limit based on price change. 1% by default. Set to below 0 to disable.
         `limits`: A tuple representing the (`stop limit`, `limit`) of the order. `(None, None)` by default. Set either to `None` to disable it. Overrides `slippage`. \n
         `length`: A `timedelta` or `int` representing how long the order should remain valid. `16 hours` by default. \n
+        `handle_errors`: A boolean. If true, errors such as quantity too high or too low will be handled, otherwise, they will be raised. \n
         Returns an `Order` representing the created order.
         """
         return self.create_order(tradeable, quantity=quantity, buy=True, slippage=slippage, limits=limits, length=length)
     
-    def create_sell_order(self, tradeable:Tradeable, quantity:int=1, slippage:float=0.01, limits:tuple=(False, False), length=timedelta(hours=16)):
+    def create_sell_order(self, tradeable:Tradeable, quantity:int=1, slippage:float=0.01, limits:tuple=(False, False), length=timedelta(hours=16), handle_errors:bool=False):
         """
         Creates a sell order on the stock market. Alias for `Account.create_order` \n
         `tradeable`: the Tradeable to order \n
@@ -341,6 +348,7 @@ class Account:
         `slippage`: Automatically calculates the limit based on price change. 1% by default. Set to below 0 to disable.
         `limits`: A tuple representing the (`stop limit`, `limit`) of the order. `(None, None)` by default. Set either to `None` to disable it. Overrides `slippage`. \n
         `length`: A `timedelta` or `int` representing how long the order should remain valid. `16 hours` by default. \n
+        `handle_errors`: A boolean. If true, errors such as quantity too high or too low will be handled, otherwise, they will be raised. \n
         Returns an `Order` representing the created order.
         """
         return self.create_order(tradeable, quantity=quantity, buy=False, slippage=slippage, limits=limits, length=length)
@@ -403,22 +411,26 @@ class HeldTradeable(Tradeable):
         if len(held_tradeable) <= 0: return -1
         return held_tradeable['average_price']
 
-    def buy(self, tradeable:Tradeable, quantity:int=1, slippage:float=0.01, limits:tuple=(False, False), length=timedelta(hours=16)):
+    def buy(self, tradeable:Tradeable, quantity:int=1, slippage:float=0.01, limits:tuple=(False, False), length=timedelta(hours=16), handle_errors:bool=False):
         """
         Creates a buy order for this `Tradeable`. Alias for `Account.create_buy_order` \n
         `quantity`: the quantity to buy or sell. `1` by default. Must be an integer. \n
         `slippage`: Automatically calculates the limit based on price change. 1% by default. Set to below 0 to disable.
         `limits`: A tuple representing the (`stop limit`, `limit`) of the order. `(None, None)` by default. Set either to `None` to disable it. Overrides `slippage`. \n
-        `length`: A `timedelta` or `int` representing how long the order should remain valid. `16 hours` by default
+        `length`: A `timedelta` or `int` representing how long the order should remain valid. `16 hours` by default. \n
+        `handle_errors`: A boolean. If true, errors such as quantity too high or too low will be handled, otherwise, they will be raised. \n
+        Returns an `Order` representing the created order.
         """
-        return self.account.create_buy_order(self, quantity=quantity, slippage=slippage, limits=limits, length=length)
+        return self.account.create_buy_order(self, quantity=quantity, slippage=slippage, limits=limits, length=length, handle_errors=handle_errors)
     
-    def sell(self, tradeable:Tradeable, quantity:int=1, slippage:float=0.01, limits:tuple=(False, False), length=timedelta(hours=16)):
+    def sell(self, tradeable:Tradeable, quantity:int=1, slippage:float=0.01, limits:tuple=(False, False), length=timedelta(hours=16), handle_errors:bool=handle_errors):
         """
         Creates a sell order for this `Tradeable`. Alias for `Account.create_sell_order` \n
         `quantity`: the quantity to buy or sell. `1` by default. Must be an integer. \n
         `slippage`: Automatically calculates the limit based on price change. 1% by default. Set to below 0 to disable.
         `limits`: A tuple representing the (`stop limit`, `limit`) of the order. `(None, None)` by default. Set either to `None` to disable it. Overrides `slippage`. \n
-        `length`: A `timedelta` or `int` representing how long the order should remain valid. `16 hours` by default
+        `length`: A `timedelta` or `int` representing how long the order should remain valid. `16 hours` by default. \n
+        `handle_errors`: A boolean. If true, errors such as quantity too high or too low will be handled, otherwise, they will be raised. \n
+        Returns an `Order` representing the created order.
         """
         return self.account.create_sell_order(self, quantity=quantity, slippage=slippage, limits=limits, length=length)
