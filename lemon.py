@@ -359,7 +359,7 @@ class Account:
 
 class Order:
     def __init__(self, uuid, account):
-        assert isinstance(account, Account), "Accout provided is not a valid accout"
+        if not isinstance(account, Account): raise ValueError('Account provided is not a valid account')
         self.uuid = uuid
         self.account = account
     
@@ -387,7 +387,7 @@ class Order:
 
 class HeldTradeable(Tradeable):
     def __init__(self, isin, account):
-        assert isinstance(account, Account), "Account provided is not a valid accout"
+        if not isinstance(account, Account): raise ValueError('Account provided is not a valid account')
         self.isin = isin
         self.account = account
     
