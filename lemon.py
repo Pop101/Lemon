@@ -423,7 +423,7 @@ class HeldTradeable(Tradeable):
         """
         return self.account.create_buy_order(self, quantity=quantity, slippage=slippage, limits=limits, length=length, handle_errors=handle_errors)
     
-    def sell(self, tradeable:Tradeable, quantity:int=1, slippage:float=0.01, limits:tuple=(False, False), length=timedelta(hours=16), handle_errors:bool=handle_errors):
+    def sell(self, tradeable:Tradeable, quantity:int=1, slippage:float=0.01, limits:tuple=(False, False), length=timedelta(hours=16), handle_errors:bool=False):
         """
         Creates a sell order for this `Tradeable`. Alias for `Account.create_sell_order` \n
         `quantity`: the quantity to buy or sell. `1` by default. Must be an integer. \n
