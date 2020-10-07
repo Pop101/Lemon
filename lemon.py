@@ -275,7 +275,7 @@ class Account:
             orders.extend(list(map(lambda x: Order(x['uuid'], self), filtered_orders)))
         return orders
     
-    def create_order(self, tradeable:Tradeable, quantity:int=1, buy:bool=False, slippage:float=0.01, limits:tuple=(False, False), length=timedelta(hours=16), handle_errors:bool=False):
+    def create_order(self, tradeable:Tradeable or str, quantity:int=1, buy:bool=False, slippage:float=0.01, limits:tuple=(False, False), length=timedelta(hours=16), handle_errors:bool=False):
         """
         Creates an order on the stock market. \n
         `tradeable`: the Tradeable to order \n
@@ -287,7 +287,7 @@ class Account:
         `handle_errors`: A boolean. If true, errors such as quantity too high or too low will be handled, otherwise, they will be raised. \n
         Returns an `Order` representing the created order.
         """
-        
+        if isinstance(tradeable, Tradeable): tradeable = tradeable.isin
         request_args = {'instrument': tradeable, 'quantity': quantity}
 
         if isinstance(length, timedelta):
