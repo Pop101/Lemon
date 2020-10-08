@@ -162,20 +162,19 @@ class Lemon:
                 return res['name']
 
     @staticmethod
-    def get_tradeable_cost(tradeable, timeout_limit=0.25):
+    def get_tradeable_cost(tradeable:Tradeable or str, timeout_limit=0.25):
         """
         Returns the last recorded price of a `Tradeable`
         """
-
-        assert isinstance(tradeable, Tradeable), "Tradeable provided is not a Tradeable"
+        if isinstance(tradeable, Tradeable): tradeable = tradeable.isin
         if timeout_limit > 0 and Lemon.is_market_open():
             try:
-                ticker = requests.get('https://api.lemon.markets/rest/v1/data/instruments/{0}/ticks/latest/'.format(tradeable.isin),timeout=timeout_limit)
+                ticker = requests.get('https://api.lemon.markets/rest/v1/data/instruments/{0}/ticks/latest/'.format(tradeable),timeout=timeout_limit)
                 ticker.raise_for_status(); ticker = ticker.json()
                 return ticker['price']
             except (requests.exceptions.ReadTimeout, TimeoutError):
                 pass
-        ticker = requests.get('https://api.lemon.markets/rest/v1/data/instruments/{0}/candle/m1/'.format(tradeable.isin), params={'ordering': '-date', 'limit': 1})
+        ticker = requests.get('https://api.lemon.markets/rest/v1/data/instruments/{0}/candle/m1/'.format(tradeable), params={'ordering': '-date', 'limit': 1})
         ticker.raise_for_status(); ticker = ticker.json()
         return ticker['results'][0]['close']
     
@@ -358,7 +357,7 @@ class Account:
 
 
 class Order:
-    def __init__(self, uuid, account):
+    def __init__(self, uuid, account:Account):
         if not isinstance(account, Account): raise ValueError('Account provided is not a valid account')
         self.uuid = uuid
         self.account = account
@@ -386,7 +385,7 @@ class Order:
         return order['status'], order['average_price']
 
 class HeldTradeable(Tradeable):
-    def __init__(self, isin, account):
+    def __init__(self, isin, account:Account):
         if not isinstance(account, Account): raise ValueError('Account provided is not a valid account')
         self.isin = isin
         self.account = account
