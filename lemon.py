@@ -162,7 +162,7 @@ class Lemon:
                 return res['name']
 
     @staticmethod
-    def get_tradeable_cost(tradeable:Tradeable or str, timeout_limit=0.25):
+    def get_tradeable_cost(tradeable, timeout_limit=0.25):
         """
         Returns the last recorded price of a `Tradeable`
         """
