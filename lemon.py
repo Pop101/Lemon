@@ -389,6 +389,7 @@ class HeldTradeable(Tradeable):
         if not isinstance(account, Account): raise ValueError('Account provided is not a valid account')
         self.isin = isin
         self.account = account
+        super().__init__(isin)
     
     def get_amount(self):
         """
