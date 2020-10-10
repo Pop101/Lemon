@@ -171,12 +171,12 @@ class Lemon:
             try:
                 ticker = requests.get('https://api.lemon.markets/rest/v1/data/instruments/{0}/ticks/latest/'.format(tradeable),timeout=timeout_limit)
                 ticker.raise_for_status(); ticker = ticker.json()
-                return ticker['price']
-            except (requests.exceptions.ReadTimeout, TimeoutError):
+                if ticker['price'] > 0: return ticker['price']
+            except (requests.exceptions.ReadTimeout, TimeoutError, KeyError):
                 pass
-        ticker = requests.get('https://api.lemon.markets/rest/v1/data/instruments/{0}/candle/m1/'.format(tradeable), params={'ordering': '-date', 'limit': 1})
+        ticker = requests.get('https://api.lemon.markets/rest/v1/data/instruments/{0}/candle/m1/latest'.format(tradeable))
         ticker.raise_for_status(); ticker = ticker.json()
-        return ticker['results'][0]['close']
+        return ticker['close']
     
     @staticmethod
     def validate_key(auth):
