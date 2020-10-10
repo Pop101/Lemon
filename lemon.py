@@ -303,10 +303,14 @@ class Account:
             slippage_price = (1-slippage) * Lemon.get_tradeable_cost(tradeable)
 
             # double-check sell quantity
-            if handle_errors: quantity = min(quantity, self.get_held_count(tradeable))
-            else: raise ValueError('You cannot sell more than you hold')
+            if quantity > self.get_held_count(tradeable):
+                if handle_errors: quantity = min(quantity, self.get_held_count(tradeable))
+                else: raise ValueError('You cannot sell more than you hold')
         
-        if quantity <= 0: raise ValueError('Quantity must be greater than 0!')
+        if quantity <= 0: 
+            if handle_errors: return None
+            else: raise ValueError('Quantity must be greater than 0!')
+        
         if slippage > 0: request_args['limit_price'] = slippage_price
         
         # override for manually-set limits
