@@ -232,6 +232,12 @@ class Account:
         req.raise_for_status(); req = req.json()
         return req['cash_to_invest']
 
+    def get_value(self):
+        value = 0
+        for tradeable in self.get_held_tradeables():
+            value += tradeable.get_cost()*tradeable.get_amount()
+        return value + self.get_funds()
+
     def get_held_tradeables(self):
         """
         Returns a list of all Tradeables currently held.
